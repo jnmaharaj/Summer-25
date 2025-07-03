@@ -19,3 +19,35 @@ h1 {
     border: 3px solid #fff;
     box-shadow: 0 4px 40px #000a;
 }
+
+#controls {
+    margin-top: 20px;
+}
+
+#controls button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+#controls button:hover {
+    background-color: #45a049;
+}
+
+#controls button:active {
+    transform: scale(0.98);
+}
+
+#statusMsg {
+    display: inline-block;
+    margin-left: 20px;
+    font-weight: bold;
+    font-size: 18px;
+    color: #FFD700;
+}

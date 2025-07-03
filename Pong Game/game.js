@@ -1,11 +1,18 @@
+// Get canvas and context
 const canvas = document.getElementById('pong');
 const ctx = canvas.getContext('2d');
 
-// Game settings
+// Game constants
 const paddleWidth = 16;
 const paddleHeight = 100;
 const ballRadius = 10;
+const maxScore = 5;
 
+// Game state variables
+let paused = false;
+let gameOver = false;
+
+// Player paddle
 const player = {
     x: 0,
     y: (canvas.height - paddleHeight) / 2,
@@ -15,6 +22,7 @@ const player = {
     score: 0
 };
 
+// AI paddle
 const ai = {
     x: canvas.width - paddleWidth,
     y: (canvas.height - paddleHeight) / 2,
@@ -24,6 +32,7 @@ const ai = {
     score: 0
 };
 
+// Ball
 const ball = {
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -34,13 +43,13 @@ const ball = {
     color: "#fff"
 };
 
-// Draw a rectangle
+// Utility: draw rectangle (paddles, background, net)
 function drawRect(x, y, w, h, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, w, h);
 }
 
-// Draw a circle (for ball)
+// Utility: draw ball
 function drawCircle(x, y, r, color) {
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -49,7 +58,7 @@ function drawCircle(x, y, r, color) {
     ctx.fill();
 }
 
-// Draw text (for scores)
+// Utility: draw score text
 function drawText(text, x, y) {
     ctx.fillStyle = "#fff";
     ctx.font = "40px Arial";
@@ -64,7 +73,7 @@ function resetBall() {
     ball.speed = 5;
 }
 
-// Collision detection
+// Detect collision between ball and paddle
 function collision(b, p) {
     return (
         b.x + b.radius > p.x &&
@@ -74,94 +83,107 @@ function collision(b, p) {
     );
 }
 
-// Control left paddle using mouse
-canvas.addEventListener("mousemove", movePaddle);
-
-function movePaddle(evt) {
+// Move player paddle with mouse
+canvas.addEventListener("mousemove", (evt) => {
     let rect = canvas.getBoundingClientRect();
     let mouseY = evt.clientY - rect.top;
     player.y = mouseY - player.height / 2;
 
     // Clamp paddle within canvas
     if (player.y < 0) player.y = 0;
-    if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
-}
+    if (player.y + player.height > canvas.height)
+        player.y = canvas.height - player.height;
+});
 
-// Update game objects
+// Pause/resume button
+document.getElementById("pauseBtn").addEventListener("click", () => {
+    if (gameOver) return;
+    paused = !paused;
+    document.getElementById("pauseBtn").textContent = paused ? "Resume" : "Pause";
+});
+
+// Restart button
+document.getElementById("restartBtn").addEventListener("click", () => {
+    player.score = 0;
+    ai.score = 0;
+    gameOver = false;
+    paused = false;
+    ball.speed = 5;
+    resetBall();
+    document.getElementById("pauseBtn").textContent = "Pause";
+    document.getElementById("statusMsg").textContent = "";
+});
+
+// Game update logic
 function update() {
+    if (paused || gameOver) return;
+
     // Move ball
     ball.x += ball.velocityX;
     ball.y += ball.velocityY;
 
-    // Top and bottom wall collision
+    // Bounce off top and bottom
     if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
         ball.velocityY = -ball.velocityY;
     }
 
-    // Left paddle collision
+    // Player paddle collision
     if (collision(ball, player)) {
-        // Calculate collision point
-        let collidePoint = ball.y - (player.y + player.height / 2);
-        collidePoint = collidePoint / (player.height / 2);
-
-        // Calculate angle in radians (max 45deg)
+        let collidePoint = (ball.y - (player.y + player.height / 2)) / (player.height / 2);
         let angleRad = (Math.PI / 4) * collidePoint;
-        // X direction after hit
         let direction = 1;
-
         ball.velocityX = direction * ball.speed * Math.cos(angleRad);
         ball.velocityY = ball.speed * Math.sin(angleRad);
-
-        // Slightly increase speed
         ball.speed += 0.3;
     }
 
-    // Right paddle collision (AI)
+    // AI paddle collision
     if (collision(ball, ai)) {
-        let collidePoint = ball.y - (ai.y + ai.height / 2);
-        collidePoint = collidePoint / (ai.height / 2);
-
+        let collidePoint = (ball.y - (ai.y + ai.height / 2)) / (ai.height / 2);
         let angleRad = (Math.PI / 4) * collidePoint;
         let direction = -1;
-
         ball.velocityX = direction * ball.speed * Math.cos(angleRad);
         ball.velocityY = ball.speed * Math.sin(angleRad);
-
         ball.speed += 0.3;
     }
 
-    // Left or right wall: score
+    // Score conditions
     if (ball.x - ball.radius < 0) {
-        // AI scores
         ai.score++;
         resetBall();
     }
     if (ball.x + ball.radius > canvas.width) {
-        // Player scores
         player.score++;
         resetBall();
     }
 
-    // AI paddle movement (basic)
+    // Simple AI movement
     let aiCenter = ai.y + ai.height / 2;
-    if (ball.y < aiCenter - 10) {
-        ai.y -= 4;
-    } else if (ball.y > aiCenter + 10) {
-        ai.y += 4;
-    }
+    if (ball.y < aiCenter - 10) ai.y -= 4;
+    else if (ball.y > aiCenter + 10) ai.y += 4;
 
-    // Clamp AI paddle within canvas
+    // Clamp AI within canvas
     if (ai.y < 0) ai.y = 0;
-    if (ai.y + ai.height > canvas.height) ai.y = canvas.height - ai.height;
+    if (ai.y + ai.height > canvas.height)
+        ai.y = canvas.height - ai.height;
+
+    // Game over check
+    if (player.score >= maxScore || ai.score >= maxScore) {
+        gameOver = true;
+        document.getElementById("statusMsg").textContent =
+            player.score > ai.score ? "🎉 You Win!" : "💀 AI Wins!";
+    }
 }
 
-// Render game objects
+// Draw all game objects
 function render() {
     drawRect(0, 0, canvas.width, canvas.height, "#222");
+
     // Net
     for (let i = 0; i < canvas.height; i += 30) {
         drawRect(canvas.width / 2 - 2, i, 4, 20, "#fff");
     }
+
     // Paddles and ball
     drawRect(player.x, player.y, player.width, player.height, player.color);
     drawRect(ai.x, ai.y, ai.width, ai.height, ai.color);
@@ -169,7 +191,7 @@ function render() {
 
     // Scores
     drawText(player.score, canvas.width / 4, 60);
-    drawText(ai.score, 3 * canvas.width / 4, 60);
+    drawText(ai.score, (3 * canvas.width) / 4, 60);
 }
 
 // Main game loop
@@ -179,5 +201,5 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Start game
+// Start the game
 gameLoop();
