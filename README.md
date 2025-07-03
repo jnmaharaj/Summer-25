@@ -2,7 +2,8 @@
 
 A simple Pong game built using **HTML5 Canvas** and **pure JavaScript**. Control your paddle with the mouse and try to beat the AI opponent!
 
-![Pong Game Screenshot](https://upload.wikimedia.org/wikipedia/commons/4/4e/Pong_Game.png)
+<img width="746" alt="image" src="https://github.com/user-attachments/assets/de852103-ffd2-4d52-80d0-1cfb4abaa4e2" />
+
 
 ---
 
