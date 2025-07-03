@@ -87,6 +87,43 @@ function movePaddle(evt) {
     if (player.y + player.height > canvas.height) player.y = canvas.height - player.height;
 }
 
+let paused = false;
+
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'p' || e.key === 'P') {
+        paused = !paused;
+    }
+});
+
+function gameLoop() {
+    if (!paused) {
+        update();
+        render();
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("restartBtn").addEventListener("click", () => {
+    player.score = 0;
+    ai.score = 0;
+    resetBall();
+});
+
+let maxScore = 5;
+let gameOver = false;
+
+function update() {
+    if (gameOver) return;
+
+    // ... existing update logic
+
+    if (player.score >= maxScore || ai.score >= maxScore) {
+        gameOver = true;
+        alert(player.score >= maxScore ? "You Win!" : "AI Wins!");
+    }
+}
+
+
 // Update game objects
 function update() {
     // Move ball
